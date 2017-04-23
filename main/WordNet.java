@@ -205,6 +205,31 @@ public class WordNet
 	 */
 	public static void main(String[] args)
 	{
+		WordNet wordNet = new WordNet(args[0], args[1]);
+
+		while (!StdIn.isEmpty())
+		{
+			String nounA = StdIn.readString();
+			String nounB = StdIn.readString();
+
+			if (!wordNet.isNoun(nounA))
+			{
+				StdOut.printf("%s is not a noun!\n", nounA);
+				continue;
+			}
+
+			if (!wordNet.isNoun(nounB))
+			{
+				StdOut.printf("%s is not a noun!\n", nounB);
+				continue;
+			}
+
+			int distance = wordNet.distance(nounA, nounB);
+			String ancestor = wordNet.sap(nounA, nounB);
+
+			StdOut.printf("distance = %d, ancestor = %s\n", distance, ancestor);
+		}
+
 		check1();
 		check2();
 	}
