@@ -12,22 +12,35 @@ import java.util.Iterator;
  *  Date    : <4/23/17>
  * 	Class	: CSIS 2420
  * 	Teacher	: Gene Riggs
- *	Description:
+ *	Description: Creates the BFS and verifies info within
+ *				 The digraph such as: Out of bounds, length
+ *				 etc.
  *
  ********************************************************/
 
 public class SAP
 {
 
+	//Fields
 	private final Digraph digraph;
 	private final BFSCache vcache, wcache;
 
+	/**
+	 * New BFS class which checks through the hash map and digraph in WordNet
+	 */
 	private class BFSCache implements Iterable<Integer> {
+
+		//Fields
 		private final boolean[] visited;
 		private final int[] distanceTo;
 		private final Queue<Integer> modified = new Queue<Integer>();
 		private final Queue<Integer> queue = new Queue<Integer>();
 
+		/**
+		 * Constructor
+		 * @param size
+		 * Checks every vertex in the queue to check if has been visited or not
+		 */
 		public BFSCache(int size) {
 			visited = new boolean[size];
 			distanceTo = new int[size];
@@ -38,10 +51,17 @@ public class SAP
 			}
 		}
 
+		/**
+		 *
+		 * @return
+		 */
 		public Iterator<Integer> iterator() {
 			return modified.iterator();
 		}
 
+		/**
+		 * Clears any vertex not visited
+		 */
 		public void clear() {
 			while (!modified.isEmpty()) {
 				int v = modified.dequeue();
@@ -50,7 +70,12 @@ public class SAP
 			}
 		}
 
-		public void bfs(int v) {
+		/**
+		 *
+		 * @param v spot that the vertex is checking at the moment
+		 *          If visited the its added to the queue if not its left alone
+		 */
+		public void BFS(int v) {
 			visited[v] = true;
 			distanceTo[v] = 0;
 
@@ -71,7 +96,11 @@ public class SAP
 			}
 		}
 
-		public void bfs(Iterable<Integer> v) {
+		/**
+		 *
+		 * @param v
+		 */
+		public void BFS(Iterable<Integer> v) {
 			for (int w : v) {
 				visited[w] = true;
 				distanceTo[w] = 0;
@@ -94,77 +123,102 @@ public class SAP
 			}
 		}
 
-		public boolean canReach(int v) {
+		/**
+		 *
+		 * @param v
+		 * @return whether the is has been visted in the DAG
+		 */
+		public boolean isDAG(int v) {
 			return visited[v];
 		}
 
-		public int distanceTo(int v) {
+		/**
+		 *
+		 * @param v
+		 * @return check whats the distance it is to the Root
+		 */
+		public int isRootedDAG(int v) {
 			return distanceTo[v];
 		}
 	}
 
-	// constructor takes a digraph (not necessarily a DAG)
+	/**
+	 *
+	 * @param G
+	 */
 	public SAP(Digraph G)
 	{
 		this.digraph = new Digraph(G);
 		this.vcache = new BFSCache(G.V());
 		this.wcache = new BFSCache(G.V());
 	}
-	
-	// is the digraph a directed acyclic graph?
-	public boolean isDAG()
-	{
-		return true;
-	}
-	
-	// is the digraph a rooted DAG?
-	public boolean isRootedDAG()
-	{
-		return true;
-	}
-	
-	// length of shortest ancestral path between v and w; -1 if no such path
+
+	/**
+	 *
+	 * @param v
+	 * @param w
+	 * @return precalculates the
+	 */
 	public int length(int v, int w)
 	{
-		precalc(v, w);
+		preCalculations(v, w);
 
 		return findDistance();
 	}
-	
-	// a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
+
+	/**
+	 *
+	 * @param v
+	 * @param w
+	 * @return Precaculates all the info said below and finds the ancestor
+	 */
 	public int ancestor(int v, int w)
 	{
-		precalc(v, w);
+		preCalculations(v, w);
 
 		return findAncestor();
-		
+
 	}
-	
-	// length of shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
+
+	/**
+	 *
+	 * @param v
+	 * @param w
+	 * @return Precaculates all the info said below and finds the length
+	 */
 	public int length(Iterable<Integer> v, Iterable<Integer> w)
 	{
-		precalc(v, w);
+		preCalculations(v, w);
 
 		return findAncestor();
 	}
-	
-	// a common ancestor that participates in shortest ancestral path; -1 if no such path
+
+	/**
+	 *
+	 * @param v
+	 * @param w
+	 * @return Precaculates all the info said below and finds the ancestor
+	 */
 	public int ancestor(Iterable<Integer> v, Iterable<Integer> w)
 	{
-		precalc(v, w);
+		preCalculations(v, w);
 
 		return findAncestor();
 	}
-	
 
+	/**
+	 *
+	 * @return the distance of the vertex
+	 * Checks the DAG and the root based up on it
+	 */
 	private int findDistance() {
 	int result = -1;
 	BFSCache[] caches = { vcache, wcache };
 
 	for (BFSCache cache : caches) {
 		for (int v : cache) {
-			if (vcache.canReach(v) && wcache.canReach(v)) {
-				int distance = vcache.distanceTo(v) + wcache.distanceTo(v);
+			if (vcache.isDAG(v) && wcache.isDAG(v)) {
+				int distance = vcache.isRootedDAG(v) + wcache.isRootedDAG(v);
 
 				if (result == -1 || distance < result) {
 					result = distance;
@@ -176,6 +230,10 @@ public class SAP
 	return result;
 }
 
+	/**
+	 *
+	 * @return the ancestors if not found then left alone
+	 */
 	private int findAncestor() {
 		int minDistance = -1;
 		int ancestor = -1;
@@ -183,8 +241,8 @@ public class SAP
 
 		for (BFSCache cache : caches) {
 			for (int v : cache) {
-				if (vcache.canReach(v) && wcache.canReach(v)) {
-					int distance = vcache.distanceTo(v) + wcache.distanceTo(v);
+				if (vcache.isDAG(v) && wcache.isDAG(v)) {
+					int distance = vcache.isRootedDAG(v) + wcache.isRootedDAG(v);
 
 					if (minDistance < 0 || distance < minDistance) {
 						minDistance = distance;
@@ -197,50 +255,93 @@ public class SAP
 		return ancestor;
 	}
 
-	private void precalc(int v, int w) {
+	/**
+	 *
+	 * @param v
+	 * @param w
+	 * Same deal as the iterable
+	 */
+	private void preCalculations(int v, int w) {
 		verifyInput(v);
 		verifyInput(w);
 
 		vcache.clear();
 		wcache.clear();
 
-		vcache.bfs(v);
-		wcache.bfs(w);
+		vcache.BFS(v);
+		wcache.BFS(w);
 	}
 
-	private void precalc(Iterable<Integer> v, Iterable<Integer> w) {
+	/**
+	 *
+	 * @param v
+	 * @param w
+	 * Returns the the BFS, verifies that the input is valid
+	 * and the it clears anything the cache
+	 */
+	private void preCalculations(Iterable<Integer> v, Iterable<Integer> w) {
 		verifyInput(v);
 		verifyInput(w);
 
 		vcache.clear();
 		wcache.clear();
 
-		vcache.bfs(v);
-		wcache.bfs(w);
+		vcache.BFS(v);
+		wcache.BFS(w);
 	}
 
+	/**
+	 *
+	 * @param v int
+	 *          Verifies that the vertex is not out of bounds
+	 */
 	private void verifyInput(int v) {
 		if (v < 0 || v >= digraph.V())
 			throw new java.lang.IndexOutOfBoundsException();
 	}
 
+	/**
+	 *
+	 * @param v
+	 * checks that the iterable is not out bounds either
+	 */
 	private void verifyInput(Iterable<Integer> v) {
 		for (int w : v) {
 			verifyInput(w);
 		}
 	}
 
+	/**
+	 *
+	 * @param args
+	 * checks the file and returns the length and ancestor of those specified
+	 *
+	 */
 	public static void main(String[] args) {
-		In in = new In(args[0]);
+		String filename = "digraph1.txt";
+
+		In in = new In(filename);
 		Digraph G = new Digraph(in);
 		SAP sap = new SAP(G);
 
-		while (!StdIn.isEmpty()) {
-			int v = StdIn.readInt();
-			int w = StdIn.readInt();
-			int length = sap.length(v, w);
-			int ancestor = sap.ancestor(v, w);
-			StdOut.printf("length = %d, ancestor = %d\n", length, ancestor);
-		}
+		int length = sap.length(3, 11);
+		int ancestor = sap.ancestor(3, 11);
+		StdOut.printf("length = %d, ancestor = %d\n", length, ancestor);
+
+		length = sap.length(7, 2);
+		ancestor = sap.ancestor(7, 2);
+		StdOut.printf("length = %d, ancestor = %d\n", length, ancestor);
+
+		length = sap.length(1, 6);
+		ancestor = sap.ancestor(1, 6);
+		StdOut.printf("length = %d, ancestor = %d\n", length, ancestor);
+
+		Queue<Integer> v = new Queue<Integer>();
+		v.enqueue(11);
+		v.enqueue(12);
+
+		Queue<Integer> w = new Queue<Integer>();
+		w.enqueue(7);
+		w.enqueue(8);
 	}
 }

@@ -16,12 +16,23 @@ import edu.princeton.cs.algs4.StdOut;
  ********************************************************/
 
 public class Outcast {
+
+	//Fields
 	private final WordNet wordNet;
 
+	/**
+	 *
+	 * @param wordNet returns a new iteration of wordnet
+	 */
 	public Outcast(WordNet wordNet) {
 		this.wordNet = wordNet;
 	}
 
+	/**
+	 *
+	 * @param nouns
+	 * @return the distances of the nouns and checks if any iteration are out of the loop
+	 */
 	public String outcast(String[] nouns) {
 		int[][] distances = new int[nouns.length][nouns.length];
 
@@ -34,6 +45,11 @@ public class Outcast {
 		return nouns[findMaximumDistance(distances)];
 	}
 
+	/**
+	 *
+	 * @param distances
+	 * @return the maximum distance of the result found
+	 */
 	private int findMaximumDistance(int[][] distances) {
 		int result = 0, maximumDistance = 0, sum = 0;
 
@@ -57,8 +73,13 @@ public class Outcast {
 		return result;
 	}
 
+	/**
+	 *
+	 * @param args
+	 * runs the files and checks through every iteration
+	 */
 	public static void main(String[] args) {
-		WordNet wordnet = new WordNet(args[0], args[1]);
+		WordNet wordnet = new WordNet("synsets.txt", "hypernyms.txt");
 		Outcast outcast = new Outcast(wordnet);
 
 		for (int t = 2; t < args.length; t++) {

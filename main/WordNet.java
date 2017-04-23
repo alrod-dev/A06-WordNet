@@ -12,18 +12,27 @@ import java.util.HashMap;
  *  Date    : <4/23/17>
  * 	Class	: CSIS 2420
  * 	Teacher	: Gene Riggs
- *	Description:
+ *	Description: Creates a hash map that read in the Synsets
+ *				 Hypernyms
  *
  ********************************************************/
 
 public class WordNet
 {
 
+	/**
+	 * Fields
+	 */
 	private final SAP sap;
 	private final HashMap<Integer, String> id2synset;
 	private final HashMap<String, Bag<Integer>> noun2ids;
 
-	// constructor takes the name of the two input files
+	/**
+	 *
+	 * @param synsets = reads in a new synset
+	 * @param hypernyms = reads in a new Hypernyms
+	 *
+	 */
 	public WordNet(String synsets, String hypernyms)
 	{
 		id2synset = new HashMap<Integer, String>();
@@ -35,6 +44,10 @@ public class WordNet
 		sap = new SAP(readHypernyms(hypernyms));
 	}
 
+	/**
+	 *
+	 * @param synsetsFile == Reads a synset file and loots at every iteration
+	 */
 	private void readSynsets(String synsetsFile)
 	{
 		In input = new In(synsetsFile);
@@ -63,6 +76,11 @@ public class WordNet
 		}
 	}
 
+	/**
+	 *
+	 * @param hypernymsFile = reads a new Hypernym file
+	 * @return the file reads with all iterations
+	 */
 	private Digraph readHypernyms(String hypernymsFile)
 	{
 		Digraph digraph = new Digraph(id2synset.size());
@@ -84,6 +102,11 @@ public class WordNet
 		return digraph;
 	}
 
+	/**
+	 *
+	 * @param digraph verifies the new digraph
+	 *             	  checks whether it has any illegal exceptions
+	 */
 	private void verifyCycle(Digraph digraph)
 	{
 		DirectedCycle directedCycle = new DirectedCycle(digraph);
@@ -94,6 +117,11 @@ public class WordNet
 		}
 	}
 
+	/**
+	 *
+	 * @param digraph verifies the root of the digraph
+	 *
+	 */
 	private void verifyRoot(Digraph digraph)
 	{
 		int roots = 0;
@@ -112,19 +140,31 @@ public class WordNet
 		}
 	}
 
-	// returns all WordNet nouns
+	/**
+	 *
+	 * @return a hash map of the key sets
+	 */
 	public Iterable<String> nouns()
 	{
 		return noun2ids.keySet();
 	}
 
-	// is the word a WordNet noun?
+	/**
+	 *
+	 * @param word checks a new iteration of word
+	 * @return a hash map of that word contained within the file
+	 */
 	public boolean isNoun(String word)
 	{
 		return noun2ids.containsKey(word);
 	}
 
-	// distance between nounA and nounB (defined below)
+	/**
+	 *
+	 * @param nounA passes first noun
+	 * @param nounB passes second dnoun
+	 * @return the lenght of the words and checks the distance
+	 */
 	public int distance(String nounA, String nounB)
 	{
 		verifyNoun(nounA);
@@ -133,8 +173,12 @@ public class WordNet
 		return sap.length(noun2ids.get(nounA), noun2ids.get(nounB));
 	}
 
-	// a synset (second field of synsets.txt) that is the common ancestor of nounA and nounB
-	// in a shortest ancestral path (defined below)
+	/**
+	 *
+	 * @param nounA
+	 * @param nounB
+	 * @return any ancestor pertaining to those nouns
+	 */
 	public String sap(String nounA, String nounB)
 	{
 		verifyNoun(nounA);
@@ -143,6 +187,10 @@ public class WordNet
 		return id2synset.get(sap.ancestor(noun2ids.get(nounA), noun2ids.get(nounB)));
 	}
 
+	/**
+	 *
+	 * @param noun verifies that it is noun
+	 */
 	private void verifyNoun(String noun)
 	{
 		if (!isNoun(noun))
@@ -151,33 +199,71 @@ public class WordNet
 		}
 	}
 
-	// do unit testing of this class
+	/**
+	 *
+	 * @param args checks whether the test were made correctly and reads in the files
+	 */
 	public static void main(String[] args)
 	{
-		WordNet wordNet = new WordNet(args[0], args[1]);
+		check1();
+		check2();
+	}
 
-		while (!StdIn.isEmpty())
-		{
-			String nounA = StdIn.readString();
-			String nounB = StdIn.readString();
+	/**
+	 * Checks the size of the synsets and hypernyms
+	 * and checks whether the ancestors to return
+	 * Works very good!
+	 */
+	private static void check1() {
+		WordNet w = new WordNet("synsets.txt", "hypernyms.txt");
 
-			if (!wordNet.isNoun(nounA))
-			{
-				StdOut.printf("%s is not a noun!\n", nounA);
-				continue;
-			}
+		// isNoun
+		assert w.isNoun("1750s");
+		assert w.isNoun("Ab");
+		assert w.isNoun("Aberdare");
+		assert w.isNoun("Abkhaz");
+		assert w.isNoun("party_line");
 
-			if (!wordNet.isNoun(nounB))
-			{
-				StdOut.printf("%s is not a noun!\n", nounB);
-				continue;
-			}
+		assert !w.isNoun("Abkhaz Abkhazian Abkhas Abkhasian");
+		assert !w.isNoun("asdfasdf;lkwqejrw");
 
-			int distance = wordNet.distance(nounA, nounB);
-			String ancestor = wordNet.sap(nounA, nounB);
+		// nouns
+		assert w.nouns() != null;
+		int size = 0;
+		for (@SuppressWarnings("unused")
+				String noun : w.nouns()) {
+			size++;
+		}
+		assert size > 82191;
 
-			StdOut.printf("distance = %d, ancestor = %s\n", distance, ancestor);
+		// distance
+		assert w.distance("Black_Plague", "black_marlin") == 33;
+		assert w.distance("American_water_spaniel", "histology") == 27;
+		assert w.distance("Brown_Swiss", "barrel_roll") == 29;
+
+		// sap
+		assert w.sap("municipality", "region").equals("region");
+		assert w.sap("individual", "edible_fruit").equals("physical_entity");
+	}
+
+	/**
+	 * Checks the illegal cycles and the Invalid roots which throw illegal arguments
+	 */
+	private static void check2() {
+		try {
+			new WordNet("synsets.txt", "hypernymsInvalidCycle.txt");
+			assert false;
+		} catch (IllegalArgumentException e) {
+			System.err.println(e);
+		}
+
+		try {
+			new WordNet("synsets.txt", "hypernymsInvalidTwoRoots.txt");
+			assert false;
+		} catch (IllegalArgumentException e) {
+			System.err.println(e);
 		}
 	}
+
 
 }
